@@ -1,0 +1,6 @@
+Flask
+tensorflow
+Pillow
+Werkzeug
+flask-cors
+gunicorn
