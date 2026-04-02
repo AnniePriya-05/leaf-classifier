@@ -125,6 +125,22 @@ document.addEventListener('DOMContentLoaded', () => {
         btnPredict.disabled = false;
     });
 
+    // Helper: wake up Render free tier with a ping, retrying until it responds
+    async function wakeUpServer(statusEl) {
+        statusEl.textContent = '⏳ Waking up server (first load may take ~60s)...';
+        for (let i = 0; i < 20; i++) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/`, { method: 'GET' });
+                if (res.ok) {
+                    statusEl.textContent = '✅ Server ready! Analyzing...';
+                    return true;
+                }
+            } catch (e) { /* still sleeping, retry */ }
+            await new Promise(r => setTimeout(r, 5000)); // wait 5s between pings
+        }
+        return false; // timed out after ~100s
+    }
+
     // 4. Predict
     btnPredict.addEventListener('click', async () => {
         if (!selectedImageBlob) return;
@@ -136,12 +152,25 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingOverlay.style.display = 'block';
         btnPredict.disabled = true;
 
-        // Prepare File data
+        // Update loading text element
+        const loadingText = loadingOverlay.querySelector('p');
+
+        // Step 1: Wake up Render server first
+        const serverReady = await wakeUpServer(loadingText);
+        if (!serverReady) {
+            alert("Server is taking too long to wake up. Please try again in a moment.");
+            loadingOverlay.style.display = 'none';
+            waitingState.style.display = 'block';
+            btnPredict.disabled = false;
+            return;
+        }
+
+        // Step 2: Send the actual image for prediction
+        loadingText.textContent = '🔬 Analyzing plant data...';
         const formData = new FormData();
         formData.append('image', selectedImageBlob, 'leaf_image.jpg');
 
         try {
-            // Append /predict to the BASE backend URL
             const response = await fetch(`${BACKEND_URL}/predict`, {
                 method: 'POST',
                 body: formData
@@ -173,10 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 predictionText.style.color = "var(--danger)";
             }
 
-            // Sync Language state instantly
             toggleLanguageDisplay(langToggle.checked);
 
-            // Show Results
             loadingOverlay.style.display = 'none';
             resultContent.style.display = 'block';
             
