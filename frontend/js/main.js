@@ -1,6 +1,6 @@
 // IMPORTANT: When you host the backend on Render, replace the below URL with your Render URL
 // Example: const BACKEND_URL = "https://agrovision-backend.onrender.com";
-const BACKEND_URL = "http://127.0.0.1:5000"; 
+const BACKEND_URL = "https://leaf-classifier-1.onrender.com"; 
 
 document.addEventListener('DOMContentLoaded', () => {
     // Only run script if we are on scanner page
